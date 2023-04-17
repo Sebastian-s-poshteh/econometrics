@@ -1,0 +1,45 @@
+# A Python code that performs recursive right-tailed unit root tests to check for bubbles using the Augmented Dickey-Fuller (ADF) test
+import numpy as np
+import pandas as pd
+from statsmodels.tsa.stattools import adfuller
+
+# Generate a time series data with a bubble
+np.random.seed(123)
+n = 100
+t = np.arange(n)
+bubble = 1000 * np.exp(0.05 * t) + 100 * np.random.randn(n)
+data = pd.Series(bubble)
+
+# Define the recursive right-tailed unit root test function
+def recursive_adf_test(data, window, p_value_threshold=0.05):
+    """
+    Perform recursive right-tailed Augmented Dickey-Fuller (ADF) unit root test to check for bubbles.
+
+    Args:
+        data (pd.Series): Time series data.
+        window (int): Size of the rolling window.
+        p_value_threshold (float): Threshold for p-value to reject the null hypothesis.
+
+    Returns:
+        List of tuples: Each tuple contains the start index of the window, the end index of the window,
+        and the p-value from the ADF test.
+    """
+    results = []
+    for i in range(len(data) - window):
+        window_data = data.iloc[i : i + window]
+        adf_result = adfuller(window_data)
+        p_value = adf_result[1]
+        results.append((i, i + window - 1, p_value))
+    return results
+
+# Perform recursive ADF test with a window size of 20
+window_size = 20
+adf_results = recursive_adf_test(data, window_size)
+
+# Print the results
+for result in adf_results:
+    start_idx, end_idx, p_value = result
+    if p_value < 0.05:
+        print(f"Window ({start_idx}, {end_idx}): P-value = {p_value:.4f} (Reject null hypothesis)")
+    else:
+        print(f"Window ({start_idx}, {end_idx}): P-value = {p_value:.4f} (Fail to reject null hypothesis)")
