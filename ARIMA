@@ -1,0 +1,47 @@
+# Basic: Using ARIMA models to predict stocks prices 
+
+import pandas as pd
+import numpy as np
+from statsmodels.tsa.arima.model import ARIMA
+import matplotlib.pyplot as plt
+
+# Load historical stock price data
+df = pd.read_csv('historical_stock_data.csv')
+df['Date'] = pd.to_datetime(df['Date'])
+df.set_index('Date', inplace=True)
+
+# Extract the closing prices
+closing_prices = df['Close'].values
+
+# Define function for ARIMA model
+def run_arima_model(data, order):
+    model = ARIMA(data, order=order)
+    model_fit = model.fit()
+    return model_fit
+
+# Define function to make predictions
+def predict_stock_prices(model_fit, start_index, end_index):
+    predictions = model_fit.predict(start=start_index, end=end_index)
+    return predictions
+
+# Split data into training and test sets
+train_size = int(len(closing_prices) * 0.8)
+train_data = closing_prices[:train_size]
+test_data = closing_prices[train_size:]
+
+# Run ARIMA model on training data
+order = (3, 1, 2) # Define order of ARIMA model (p, d, q)
+model_fit = run_arima_model(train_data, order)
+
+# Make predictions on test data
+start_index = len(train_data)
+end_index = len(train_data) + len(test_data) - 1
+predictions = predict_stock_prices(model_fit, start_index, end_index)
+
+# Plot actual vs predicted prices
+plt.plot(test_data, label='Actual')
+plt.plot(predictions, label='Predicted')
+plt.xlabel('Time')
+plt.ylabel('Stock Price')
+plt.legend()
+plt.show()
